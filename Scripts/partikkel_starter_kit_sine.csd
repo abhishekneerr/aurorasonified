@@ -1,6 +1,6 @@
 <CsoundSynthesizer>
 <CsOptions>
--odac0
+-odac1
 -M 0
 </CsOptions>
 <CsInstruments>
@@ -9,6 +9,19 @@
   ksmps   = 10
   nchnls   = 2
   0dbfs  = 1
+
+  ;instr 1
+  ;iCpsMidi cpsmidi
+;
+  ;turnoff2
+  ;noteoff
+;
+  ;kTrigger init 1
+  ;schedkwhen 1, 0, 12, 10, 0, -1, iCpsMidi
+  ;kTrigger = 0
+;
+  ;endin
+
 
 ;***************************************************
 ;ftables
@@ -24,6 +37,9 @@
  giExpFall ftgen 0, 0, 8193, 5, 1, 8193, 0.00001 ; exponential decay
  giTriangleWin ftgen 0, 0, 8193, 7, 0, 4096, 1, 4096, 0 ; triangular window
 
+
+ gaPartikkel1 init 0
+ gaPartikkel2 init 0
 ;******************************************************
 ; partikkel instr
 instr 1
@@ -177,20 +193,34 @@ instr 1
 
  ;####################
 
+
+ k11 ctrl7 1, 11, 0, 1  ; Used for RelDur
+ k11 init 0.5
+
+ k12 ctrl7 1, 12, 0, 1 ; Used for grainrate
+ k12 init 0.5
+
+ k13 ctrl7   1, 13, 0, 1  ; Controls Distortion
+ k13 init 0.5
+
+ k14 ctrl7 1, 14, 0, 1 ; Controls AM
+ k14 init 0.5
+
+ k15 ctrl7 1, 15, 0, 1 ; Controls Reverb & ADSR
+ k15 init 0.5
+
+
  ;; Pitch of tone is controlled by midi note played
  iCpsMidi cpsmidi
  kwavfreq = iCpsMidi
 
- k12    ctrl7 1, 12, 0, 1 ; Used for grainrate
- k12 = (k12^4)*1.9 + 0.1
-
- ;k12    ctrl7 1, 12, 1.99, 8
- ;k12 = int(k12)*0.25
- printk2 k12
- kgrainrate = iCpsMidi*k12
-
- k11 ctrl7 1, 11, 0, 1  ; Used for RelDur
+ ;; Grainrate and duration
  kRelDur = (k11^2)*1.9 + 0.1
+
+ kRateControl = ((k12^2)*1.5+0.5)
+ ;kRateControl = ((k12^2)*20+0.2)
+ ;kgrainrate = (k11*iCpsMidi) + (kRateControl*(1-k11))
+ kgrainrate = iCpsMidi * kRateControl
  kduration = (kRelDur*1000)/kgrainrate ; grain dur in milliseconds, relative to grain rate
 
 
@@ -217,12 +247,84 @@ a1,a2,a3,a4,a5,a6,a7,a8 partikkel \ ; (beginner)
  imax_grains ; system parameter (advanced)
 
 
- k13 init 1
- k13    ctrl7   1, 13, 0, 1  ; Controls Distortion
- kDistortion = (k13^2)*10 + 1
 
- aOutL = tanh(a1 * kDistortion) * (1/kDistortion)
- aOutR = tanh(a2 * kDistortion) * (1/kDistortion)
+ ;; Amplitude modulation:
+ kAM_freq = iCpsMidi * ((k14*1.5) + 0.5)
+ kAM_amp = 1
+ aAM oscil kAM_amp, kAM_freq
+ aAM = (aAM+kAM_amp)*0.5 ; Normalize over 0
+ a1 = (a1*aAM*k14) + (a1*(1-k14))
+ a2 = (a2*aAM*k14) + (a2*(1-k14))
+
+
+
+ ;; Distortion:
+ kDistortion = (k13^2)*10 + 1
+ a1 = tanh(a1 * kDistortion) * (1/kDistortion)
+ a2 = tanh(a2 * kDistortion) * (1/kDistortion)
+
+
+ ;; Reverb:
+ kReverb_level = (k15)*0.7 + 0.2
+ kReverb_cutoff = (k15^3)*12000 + 1000
+ chnset kReverb_level, "Reverb_level"
+ chnset kReverb_cutoff, "Reverb_cutoff"
+ chnset k15, "k15"
+
+
+ adsr:
+ ;; ADSR
+ kAttack = ((k15^3)*0.50)+0.01
+ iAttack = i(kAttack)
+ iDecay = iAttack*0.3
+ kSustain = (k15)*0.8+0.2
+ iSustain = i(kSustain)
+ iRelease = iAttack*4
+ print iAttack
+ print iDecay
+ print iSustain
+ print iRelease
+ if (iAttack == 0) then
+    reinit adsr
+ endif
+ ;xtratim iRelease
+ ;aAdsr linsegr 0, iAttack, 1, iDecay, iSustain, iRelease, 0
+ aAdsr expsegr 0.1, iAttack, 1, iDecay, iSustain, iRelease, 0.1
+
+ a1 *= aAdsr * 0.8
+ a2 *= aAdsr * 0.8
+
+ gaPartikkel1 += a1
+ gaPartikkel2 += a2
+
+endin
+
+instr 100  ;; Reverb
+
+ a1 = gaPartikkel1
+ a2 = gaPartikkel2
+ gaPartikkel1 = 0
+ gaPartikkel2 = 0
+ ;printk2(rms(a1))
+
+ k0 = 0
+ kReverb_level chnget "Reverb_level"
+ chnset k0, "Reverb_level"
+ kReverb_cutoff chnget "Reverb_cutoff"
+ chnset k0, "Reverb_cutoff"
+ k15 chnget "k15"
+
+ iReverbAmp = 0.7
+ aReverbL, aReverbR reverbsc a1, a2, kReverb_level, kReverb_cutoff
+ aOutL = (a1*(1-k15)) + (tanh(aReverbL * iReverbAmp) * k15)
+ aOutR = (a2*(1-k15)) + (tanh(aReverbR * iReverbAmp) * k15)
+ ;printk2 (rms(aOutL))
+
+ ;; Volume: (Just while working)
+ k18 init 0.5
+ k18 ctrl7 1, 18, 0, 1
+ aOutL *= k18
+ aOutR *= k18
 
  outs aOutL, aOutR
 endin
@@ -231,5 +333,6 @@ endin
 <CsScore>
 ;  start  dur
 ;i1   0     10
+i100 0 36000000
 </CsScore>
 </CsoundSynthesizer>
