@@ -1,6 +1,6 @@
 <CsoundSynthesizer>
 <CsOptions>
--odac1
+-odac0
 -M 0
 </CsOptions>
 <CsInstruments>
@@ -9,6 +9,37 @@
   ksmps   = 10
   nchnls   = 2
   0dbfs  = 1
+
+
+;***********************************
+; Phaser UDO by Victor Lazzarini 2013
+	opcode Phaser,a,akk
+	setksmps 1
+	ax,kfr,kR xin
+	adel1 init 0
+	adel2 init 0
+
+	kR = 1/kR
+	/* ksmps = 1 */
+	/* 2nd order allpass */
+	kthecos = cos((2*$M_PI*kfr)/sr);
+	aa1 = -2*kR*kthecos;
+	aa2 = kR*kR;
+	ab1 = (-2/kR)*kthecos;
+	ab2 = 1/aa2;
+
+	aw = ax - ab1*adel1 - ab2*adel2
+	ay = aw + aa1*adel1 + aa2*adel2
+
+	adel2 = adel1
+	adel1 = aw
+
+	aout = ax + ay 	/* combines original signal + allpass output so the destructive difference causes bump in spectrum */
+	xout aout
+
+	endop
+;***********************************
+
 
   ;instr 1
   ;iCpsMidi cpsmidi
@@ -40,6 +71,7 @@
 
  gaPartikkel1 init 0
  gaPartikkel2 init 0
+ gkRateControl init 0
 ;******************************************************
 ; partikkel instr
 instr 1
@@ -197,8 +229,8 @@ instr 1
  k11 ctrl7 1, 11, 0, 1  ; Used for RelDur
  k11 init 0.5
 
- k12 ctrl7 1, 12, 0, 1 ; Used for grainrate
- k12 init 0.5
+ ;k12 ctrl7 1, 12, 0, 1 ; Used for grainrate
+ ;k12 init 0.5
 
  k13 ctrl7   1, 13, 0, 1  ; Controls Distortion
  k13 init 0.5
@@ -217,13 +249,20 @@ instr 1
  ;; Grainrate and duration
  kRelDur = (k11^2)*1.9 + 0.1
 
- kRateControl = ((k12^2)*1.5+0.5)
+ ;kRateControl = ((k12^2)*1.5+0.5)
  ;kRateControl = ((k12^2)*20+0.2)
+
+ ;kRateControlNorm = 2^int(k12*3.99)*0.5
+ ;kRateControl init i(kRateControlNorm)
+ ;printk2 kRateControl
+ ;kRateControl = port(kRateControlNorm, 0.2, i(kRateControl))
  ;kgrainrate = (k11*iCpsMidi) + (kRateControl*(1-k11))
+ kRateControl = gkRateControl
  kgrainrate = iCpsMidi * kRateControl
  kduration = (kRelDur*1000)/kgrainrate ; grain dur in milliseconds, relative to grain rate
 
-
+ ;krandommask = ... <- CONTROL
+ ;ka_d_ration = ... <- CONTROL
  ;####################
 
 
@@ -247,7 +286,6 @@ a1,a2,a3,a4,a5,a6,a7,a8 partikkel \ ; (beginner)
  imax_grains ; system parameter (advanced)
 
 
-
  ;; Amplitude modulation:
  kAM_freq = iCpsMidi * ((k14*1.5) + 0.5)
  kAM_amp = 1
@@ -256,6 +294,66 @@ a1,a2,a3,a4,a5,a6,a7,a8 partikkel \ ; (beginner)
  a1 = (a1*aAM*k14) + (a1*(1-k14))
  a2 = (a2*aAM*k14) + (a2*(1-k14))
 
+
+ ;; Noise: (??) <- CONTROL
+ aRandom rand 1
+ kRandomMix = 0.3
+ kRandomFreq = iCpsMidi
+ kRandomBandLFO = (oscil(0.5, 0.2) + 0.5)
+ kRandomBandControl = kRandomBandLFO * 0.01 + 0.01
+ kRandomBand = kRandomFreq*kRandomBandControl
+ kAmpFactor = 0.8
+ aRandom = \
+    butbp(aRandom, kRandomFreq*1, kRandomBand*1) * kAmpFactor^0 + \
+    butbp(aRandom, kRandomFreq*2, kRandomBand*2) * kAmpFactor^1 + \
+    butbp(aRandom, kRandomFreq*3, kRandomBand*3) * kAmpFactor^2 + \
+    butbp(aRandom, kRandomFreq*4, kRandomBand*4) * kAmpFactor^3 + \
+    butbp(aRandom, kRandomFreq*5, kRandomBand*5) * kAmpFactor^4
+ a1 = ((a1*(1-kRandomMix)^0.5) + (aRandom*kRandomMix^0.5))
+ a2 = ((a2*(1-kRandomMix)^0.5) + (aRandom*kRandomMix^0.5))
+
+
+ k19 ctrl7 1, 19, 0, 1
+ k20 ctrl7 1, 20, 0, 1
+ k21 ctrl7 1, 21, 0, 1
+ k22 ctrl7 1, 22, 0, 1
+ ;; Chorus / Flanger: <- CONTROL
+ kChorusMix = k19;0.5 ; MAX:0.5, MIN:0.0
+ kChorusOffset = (k22^3*20)+0.01;20
+ kChorusRate = k21^2*5+0.1;0.4
+ kChorusDepth = (k20^3*kChorusOffset)+0.01;10
+ printk2 kChorusMix
+ printk2 kChorusDepth
+ printk2 kChorusRate
+ printk2 kChorusOffset
+ iChorusTable = giSine
+  aDelayTime1 oscili 0.5, kChorusRate, iChorusTable, 0 ; delay time oscillator (LFO)
+  aDelayTime2 oscili 0.5, kChorusRate, iChorusTable, .5 ; delay time oscillator (LFO)
+  aDelayTime1 = ((aDelayTime1+0.5)*kChorusDepth)+kChorusOffset ; scale and offset LFO
+  aDelayTime2 = ((aDelayTime2+0.5)*kChorusDepth)+kChorusOffset ; scale and offset LFO
+ aChorusL vdelayx a1, aDelayTime1*0.001, 1, 4
+ aChorusR vdelayx a2, aDelayTime2*0.001, 1, 4
+ a1 = ((a1*(1-kChorusMix)^0.5) + (aChorusL*kChorusMix^0.5))
+ a2 = ((a2*(1-kChorusMix)^0.5) + (aChorusR*kChorusMix^0.5))
+
+
+
+
+;; todo: Some volume scaling to compensate for reverb
+;; ADSR
+ adsr:
+ kAttack = ((k15^3)*0.50)+0.01
+ iAttack = i(kAttack)
+ iDecay = iAttack*0.3
+ kSustain = (k15)*0.8+0.2
+ iSustain = i(kSustain)
+ iRelease = iAttack*8
+ if (iAttack == 0) then
+    reinit adsr
+ endif
+ aAdsr expsegr 0.02, iAttack, 1, iDecay, iSustain, iRelease, 0.01
+ a1 *= aAdsr * 0.8
+ a2 *= aAdsr * 0.8
 
 
  ;; Distortion:
@@ -271,29 +369,6 @@ a1,a2,a3,a4,a5,a6,a7,a8 partikkel \ ; (beginner)
  chnset kReverb_cutoff, "Reverb_cutoff"
  chnset k15, "k15"
 
-
- adsr:
- ;; ADSR
- kAttack = ((k15^3)*0.50)+0.01
- iAttack = i(kAttack)
- iDecay = iAttack*0.3
- kSustain = (k15)*0.8+0.2
- iSustain = i(kSustain)
- iRelease = iAttack*4
- print iAttack
- print iDecay
- print iSustain
- print iRelease
- if (iAttack == 0) then
-    reinit adsr
- endif
- ;xtratim iRelease
- ;aAdsr linsegr 0, iAttack, 1, iDecay, iSustain, iRelease, 0
- aAdsr expsegr 0.1, iAttack, 1, iDecay, iSustain, iRelease, 0.1
-
- a1 *= aAdsr * 0.8
- a2 *= aAdsr * 0.8
-
  gaPartikkel1 += a1
  gaPartikkel2 += a2
 
@@ -307,6 +382,35 @@ instr 100  ;; Reverb
  gaPartikkel2 = 0
  ;printk2(rms(a1))
 
+ ;; Phaser: <- CONTROL
+ kPhaserMix = 1
+ kPhaserLowFreq = 100
+ kPhaserRange = 5000
+ kPhaserLFO oscil 0.5, 0.2, giSine ;; TEST med: giSigmoRise eller giSigmoFall
+ kPhaserFr = ((kPhaserLFO+0.5)*kPhaserRange)+kPhaserLowFreq
+ kPhaserSharpness = 0.9
+ kPhaserScale = kPhaserSharpness*kPhaserSharpness*0.3 ; empirical scaling factor (Oeyvind)
+ aPhaserL Phaser a1,kPhaserFr,kPhaserSharpness ; Allpass phaser UDO
+ aPhaserR Phaser a2,kPhaserFr,kPhaserSharpness ; Allpass phaser UDO
+ aPhaserL *= kPhaserScale
+ aPhaserR *= kPhaserScale
+ aPhaserL Phaser aPhaserL,kPhaserFr*2,kPhaserSharpness ; Allpass phaser UDO
+ aPhaserR Phaser aPhaserR,kPhaserFr*2,kPhaserSharpness ; Allpass phaser UDO
+ aPhaserL *= kPhaserScale
+ aPhaserR *= kPhaserScale
+ aPhaserL Phaser aPhaserL,kPhaserFr*4,kPhaserSharpness ; Allpass phaser UDO
+ aPhaserR Phaser aPhaserR,kPhaserFr*4,kPhaserSharpness ; Allpass phaser UDO
+ aPhaserL *= kPhaserScale
+ aPhaserR *= kPhaserScale
+ aPhaserL Phaser aPhaserL,kPhaserFr*8,kPhaserSharpness ; Allpass phaser UDO
+ aPhaserR Phaser aPhaserR,kPhaserFr*8,kPhaserSharpness ; Allpass phaser UDO
+ aPhaserL *= kPhaserScale
+ aPhaserR *= kPhaserScale
+ a1 = ((a1*(1-kPhaserMix)^0.5) + (aPhaserL*kPhaserMix^0.5))
+ a2 = ((a2*(1-kPhaserMix)^0.5) + (aPhaserR*kPhaserMix^0.5))
+
+
+
  k0 = 0
  kReverb_level chnget "Reverb_level"
  chnset k0, "Reverb_level"
@@ -316,9 +420,11 @@ instr 100  ;; Reverb
 
  iReverbAmp = 0.7
  aReverbL, aReverbR reverbsc a1, a2, kReverb_level, kReverb_cutoff
- aOutL = (a1*(1-k15)) + (tanh(aReverbL * iReverbAmp) * k15)
- aOutR = (a2*(1-k15)) + (tanh(aReverbR * iReverbAmp) * k15)
- ;printk2 (rms(aOutL))
+ a1 = (a1*sqrt(1-k15)) + (tanh(aReverbL * iReverbAmp) * sqrt(k15))
+ a2 = (a2*sqrt(1-k15)) + (tanh(aReverbR * iReverbAmp) * sqrt(k15))
+
+ aOutL = a1
+ aOutR = a2
 
  ;; Volume: (Just while working)
  k18 init 0.5
@@ -327,6 +433,16 @@ instr 100  ;; Reverb
  aOutR *= k18
 
  outs aOutL, aOutR
+
+
+ ;; Temp placement:
+ k12 ctrl7 1, 12, 0, 1 ; Used for grainrate
+ k12 init 0.5
+
+ kRateControlNorm = 2^int(k12*3.99)*0.25
+ kRateControl = port(kRateControlNorm, 0.01)
+ gkRateControl = kRateControl
+
 endin
 
 </CsInstruments>

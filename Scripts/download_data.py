@@ -69,8 +69,8 @@ def main():
     if not press_by_id(driver, id_timespan_button):
         print("Exiting python")
         return 1
-    #if not press_by_id(driver, id_7days_timespan):
-    if not press_by_id(driver, id_2hours_timespan):
+    #if not press_by_id(driver, id_2hours_timespan):
+    if not press_by_id(driver, id_7days_timespan):
         print("Exiting python")
         return 1
     if not press_by_id(driver, id_save_button):
