@@ -130,3 +130,6 @@ dmypy.json
 
 # vs code settings
 .vscode/
+
+# testing purpose data
+test
