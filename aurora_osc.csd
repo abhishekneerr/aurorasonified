@@ -1,13 +1,13 @@
 <Cabbage>
-form caption("Untitled") size(400, 300), colour(58, 110, 182), pluginid("def1")
-keyboard bounds(8, 158, 381, 95)
+form caption("Aurora synth"), size(800, 300), colour(58, 110, 182), pluginid("aur1")
+keyboard bounds(0, 205, 800, 95)
+hslider bounds(0, 50, 800, 50), range(0, 53, 0, 1, 1), channel("indexday"), increment(1), popuptext("Days back")    ;; Add max value as variable
 
-rslider bounds(272, 34, 100, 100), channel("gain"), range(0, 11, 0, 1, 1), text("Gain"), trackercolour(0, 255, 0, 255), outlinecolour(0, 0, 0, 50), textcolour(0, 0, 0, 255)
-
+hslider bounds(0, 124, 800, 50), range(0, 287, 0, 1, 1), increment(1), channel("indextime"), popuptext("Time of day") 
 </Cabbage>
 <CsoundSynthesizer>
 <CsOptions>
--n -d -+rtmidi=NULL -M0 -m0d --midi-key-cps=4 --midi-velocity-amp=5
+;-n -d -+rtmidi=NULL -M0 -m0d --midi-key-cps=4 --midi-velocity-amp=5
 </CsOptions>
 <CsInstruments>
 ; Initialize the global variables. 
@@ -40,10 +40,16 @@ gilisten OSCinit 7000
     instr  2
     
 ;--------  send osc message to python ----------;
-
-        kGain chnget "gain"
+           
+           
+        ;;; HERE ARE THE CHANGES I'VE MADE // JOEL:
+        kTime chnget "indextime"
+        kDay chnget "indexday"
+        kFinalIndex = kTime + kDay*288
+        ;kGain chnget "gain"
         ;Sdata_time = "2021-01-27 00:00:00"
-            OSCsend kGain, "127.0.0.1", 8000, "/osc_message_to_python", "f", kGain
+        printk2 kFinalIndex    ;; <- DEBUG
+            OSCsend kFinalIndex, "127.0.0.1", 8000, "/index_from_csound", "i", kFinalIndex
 ;            printk 0, kGain
 ;            
 ;            
@@ -84,7 +90,7 @@ gilisten OSCinit 7000
             kTemp_min init 0
             kTemp_max init 0
             
-            ;STimeStamp strcpy ""
+            ;STimeStamp = ""
             
             
             nxtmsg:
@@ -133,6 +139,7 @@ gilisten OSCinit 7000
                 printk 0,kBt_med
                 printk 0,kBt_min
                 printk 0,kBt_max
+                ;prints "sTimeStamp", 10
                 ;sprintfk 0,STimeStamp
                 
                 kgoto nxtmsg
