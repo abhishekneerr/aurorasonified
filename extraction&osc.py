@@ -109,7 +109,7 @@ if __name__ == '__main__':
     
     ##catching osc messages or receiving osc messages
     dispatcher = dispatcher.Dispatcher()
-    dispatcher.map("/osc_message_to_python", get_osc_messages) #creating the variables we want to receive osc messages for
+    dispatcher.map("/index_from_csound", get_osc_messages) #creating the variables we want to receive osc messages for
 
     #set up server to listen for osc messages
     server = osc_server.ThreadingOSCUDPServer((ip,inport),dispatcher)
