@@ -248,6 +248,7 @@ instr 10
                 kTemp_min  chnget  "Temp_min"
                 kTemp_max  chnget  "Temp_max"
 
+   printk2 kBt_med
 
 ; select source waveform 1, (the other 3 waveforms can be set inside the include file partikkel_basic_settings.inc)
  kwaveform1 = giSine ; source audio waveform 1

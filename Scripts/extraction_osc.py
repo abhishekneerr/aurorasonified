@@ -12,7 +12,10 @@ import csv
 ip = "127.0.0.1"
 sendport = 9000
 inport = 8000 
-        
+
+filename = "../Data_csound/for_csound.csv"
+aurora_data = pd.read_csv(filename) 
+
 def scaling(value, minimum, maximum, factor=1):
     """Scale the value according to the recorded minimum and maximum values, to something between 0-1"""
     return (value-minimum)/(maximum-minimum)
@@ -57,15 +60,10 @@ def scaling_by_type(value, type):
     return scaling(value, min, max, factor)
 
 
-def read_csv():
-    filename = "../Data_csound/for_csound.csv"
-    csv_file = pd.read_csv(filename) 
-    return csv_file
 
 
 def get_data_from_csv(index_from_csound):
     
-    aurora_data =  read_csv()
     selected_row = aurora_data.iloc[index_from_csound]
     all_data = []
     for index in selected_row: 
@@ -81,7 +79,6 @@ def get_osc_messages(data_path, data_sent):
 
 def send_osc_messages(sendport, all_data):
     # TEMP:
-    print("Bt_med", scaling_by_type(float(all_data[0]), "Bt_med"))
     
     client.send_message("/Bt_med", scaling_by_type(float(all_data[0]), "Bt_med"))
     client.send_message("/Bt_min", scaling_by_type(float(all_data[1]), "Bt_min"))
@@ -127,7 +124,6 @@ if __name__ == '__main__':
 
     #set up server to listen for osc messages
     server = osc_server.ThreadingOSCUDPServer((ip,inport),dispatcher)
-    print("serving on {}".format(server.server_address))
     server.serve_forever()
     
     # time_stamp = 1
