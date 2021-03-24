@@ -84,8 +84,13 @@ gilisten OSCinit 9000
 ;; Route all midi to instrument 2
 massign 0, 10
 
+instr 1
+  iSeconds = 2
+  kTrigger metro 1, 1/iSeconds
+  schedkwhen kTrigger, 0, 1, 2, 0, 0.1
+endin
 
-    instr  1
+    instr  2
 
 ;--------  send osc message to python ----------;
 
@@ -212,7 +217,7 @@ massign 0, 10
 instr 10
 
 
-                kBt_med chnget  "Bt_med"
+                kBt_med chnget  "Bt_med" ; Controls Reverb
                 kBt_min chnget  "Bt_min"
                 kBt_max chnget  "Bt_max"
 
@@ -248,7 +253,8 @@ instr 10
                 kTemp_min  chnget  "Temp_min"
                 kTemp_max  chnget  "Temp_max"
 
-   printk2 kBt_med
+
+
 
 ; select source waveform 1, (the other 3 waveforms can be set inside the include file partikkel_basic_settings.inc)
  kwaveform1 = giSine ; source audio waveform 1
@@ -415,6 +421,29 @@ instr 10
  k15 ctrl7 1, 15, 0, 1 ; Controls Reverb & ADSR
  k15 init 0.5
 
+ k19 ctrl7 1, 19, 0, 1
+ k20 ctrl7 1, 20, 0, 1
+ k21 ctrl7 1, 21, 0, 1
+ k22 ctrl7 1, 22, 0, 1
+
+ ;; Just testing:
+ kBt_med = 0.5
+ k11 = kBt_med
+ k12 = kBt_med
+ k13 = kBt_med
+ k14 = kBt_med
+ k15 = kBt_med
+ k16 = kBt_med
+ k17 = kBt_med
+ k18 = kBt_med
+ k19 = kBt_med
+ k20 = kBt_med
+ k21 = kBt_med
+ k22 = kBt_med
+ k23 = kBt_med
+ gkRateControl = 1
+ printk2 kBt_med
+
 
  ;; Pitch of tone is controlled by midi note played
  iCpsMidi cpsmidi
@@ -465,8 +494,8 @@ a1,a2,a3,a4,a5,a6,a7,a8 partikkel \ ; (beginner)
  kAM_amp = 1
  aAM oscil kAM_amp, kAM_freq
  aAM = (aAM+kAM_amp)*0.5 ; Normalize over 0
- a1 = (a1*aAM*k14) + (a1*(1-k14))
- a2 = (a2*aAM*k14) + (a2*(1-k14))
+ ;a1 = (a1*aAM*k14) + (a1*(1-k14))
+ ;a2 = (a2*aAM*k14) + (a2*(1-k14))
 
 
  ;; Noise: (??) <- CONTROL
@@ -483,14 +512,10 @@ a1,a2,a3,a4,a5,a6,a7,a8 partikkel \ ; (beginner)
     butbp(aRandom, kRandomFreq*3, kRandomBand*3) * kAmpFactor^2 + \
     butbp(aRandom, kRandomFreq*4, kRandomBand*4) * kAmpFactor^3 + \
     butbp(aRandom, kRandomFreq*5, kRandomBand*5) * kAmpFactor^4
- a1 = ((a1*(1-kRandomMix)^0.5) + (aRandom*kRandomMix^0.5))
- a2 = ((a2*(1-kRandomMix)^0.5) + (aRandom*kRandomMix^0.5))
+ ;a1 = ((a1*(1-kRandomMix)^0.5) + (aRandom*kRandomMix^0.5))
+ ;a2 = ((a2*(1-kRandomMix)^0.5) + (aRandom*kRandomMix^0.5))
 
 
- k19 ctrl7 1, 19, 0, 1
- k20 ctrl7 1, 20, 0, 1
- k21 ctrl7 1, 21, 0, 1
- k22 ctrl7 1, 22, 0, 1
  ;; Chorus / Flanger: <- CONTROL
  kChorusMix = k19;0.5 ; MAX:0.5, MIN:0.0
  kChorusOffset = (k22^3*20)+0.01;20
@@ -507,8 +532,8 @@ a1,a2,a3,a4,a5,a6,a7,a8 partikkel \ ; (beginner)
   aDelayTime2 = ((aDelayTime2+0.5)*kChorusDepth)+kChorusOffset ; scale and offset LFO
  aChorusL vdelayx a1, aDelayTime1*0.001, 1, 4
  aChorusR vdelayx a2, aDelayTime2*0.001, 1, 4
- a1 = ((a1*(1-kChorusMix)^0.5) + (aChorusL*kChorusMix^0.5))
- a2 = ((a2*(1-kChorusMix)^0.5) + (aChorusR*kChorusMix^0.5))
+ ;a1 = ((a1*(1-kChorusMix)^0.5) + (aChorusL*kChorusMix^0.5))
+ ;a2 = ((a2*(1-kChorusMix)^0.5) + (aChorusR*kChorusMix^0.5))
 
 
 
@@ -526,22 +551,23 @@ a1,a2,a3,a4,a5,a6,a7,a8 partikkel \ ; (beginner)
     reinit adsr
  endif
  aAdsr expsegr 0.02, iAttack, 1, iDecay, iSustain, iRelease, 0.01
- a1 *= aAdsr * 0.8
- a2 *= aAdsr * 0.8
+ ;a1 *= aAdsr * 0.8
+ ;a2 *= aAdsr * 0.8
 
 
  ;; Distortion:
  kDistortion = (k13^2)*10 + 1
- a1 = tanh(a1 * kDistortion) * (1/kDistortion)
- a2 = tanh(a2 * kDistortion) * (1/kDistortion)
+ ;a1 = tanh(a1 * kDistortion) * (1/kDistortion)
+ ;a2 = tanh(a2 * kDistortion) * (1/kDistortion)
 
 
  ;; Reverb:
- kReverb_level = (k15)*0.7 + 0.2
- kReverb_cutoff = (k15^3)*12000 + 1000
+ kReverb_level = (kBt_med)*0.7 + 0.2
+ kReverb_cutoff = (kBt_med^3)*12000 + 1000
+ kReverb_mix = kBt_med
  chnset kReverb_level, "Reverb_level"
  chnset kReverb_cutoff, "Reverb_cutoff"
- chnset k15, "k15"
+ chnset kReverb_mix, "kReverb_mix"
 
  gaPartikkel1 += a1
  gaPartikkel2 += a2
@@ -581,8 +607,8 @@ instr 100  ;; Reverb
  aPhaserR Phaser aPhaserR,kPhaserFr*8,kPhaserSharpness ; Allpass phaser UDO
  aPhaserL *= kPhaserScale
  aPhaserR *= kPhaserScale
- a1 = ((a1*(1-kPhaserMix)^0.5) + (aPhaserL*kPhaserMix^0.5))
- a2 = ((a2*(1-kPhaserMix)^0.5) + (aPhaserR*kPhaserMix^0.5))
+ ;a1 = ((a1*(1-kPhaserMix)^0.5) + (aPhaserL*kPhaserMix^0.5))
+ ;a2 = ((a2*(1-kPhaserMix)^0.5) + (aPhaserR*kPhaserMix^0.5))
 
 
 
@@ -591,28 +617,31 @@ instr 100  ;; Reverb
  chnset k0, "Reverb_level"
  kReverb_cutoff chnget "Reverb_cutoff"
  chnset k0, "Reverb_cutoff"
- k15 chnget "k15"
+ kReverb_mix chnget "kReverb_mix"
 
  iReverbAmp = 0.7
  aReverbL, aReverbR reverbsc a1, a2, kReverb_level, kReverb_cutoff
- a1 = (a1*sqrt(1-k15)) + (tanh(aReverbL * iReverbAmp) * sqrt(k15))
- a2 = (a2*sqrt(1-k15)) + (tanh(aReverbR * iReverbAmp) * sqrt(k15))
+ ;a1 = (a1*sqrt(1-kReverb_mix)) + (tanh(aReverbL * iReverbAmp) * sqrt(kReverb_mix))
+ ;a2 = (a2*sqrt(1-kReverb_mix)) + (tanh(aReverbR * iReverbAmp) * sqrt(kReverb_mix))
 
  aOutL = a1
  aOutR = a2
 
  ;; Volume: (Just while working)
  k18 init 0.5
- k18 ctrl7 1, 18, 0, 1
+ k18 ctrl7 1, 18, 0, 10
  aOutL *= k18
  aOutR *= k18
 
+ aOutL oscil 1, 440
+ aOutR oscil 1, 440
  outs aOutL, aOutR
 
 
  ;; Temp placement:
  k12 ctrl7 1, 12, 0, 1 ; Used for grainrate
  k12 init 0.5
+ k12 = 0.7
 
  kRateControlNorm = 2^int(k12*3.99)*0.25
  kRateControl = port(kRateControlNorm, 0.01)
