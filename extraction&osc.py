@@ -13,9 +13,54 @@ ip = "127.0.0.1"
 sendport = 7000
 inport = 8000 
         
+def scaling(value, minimum, maximum, factor=1):
+    """Scale the value according to the recorded minimum and maximum values, to something between 0-1"""
+    return (value-minimum)/(maximum-minimum)
+
+def scaling_by_type(value, type):
+    """Collection of maximum and minimum for different types of values"""
+
+    factor = 1
+    # Commented values are the actually observed min and max. 
+    if "Bt" in type:
+        max = 30.0 # 23.21
+        min = 0.0 # 0.25
+    elif "Bx" in type:
+        max = 20.0  #13.68
+        min = -10.0 #-6.82
+    elif "By" in type:
+        max = 10.0 #7.77
+        min = -25.0 #-19.74
+    elif "Bz" in type:
+        max = 25.0 #20.55
+        min = -25.0 #-19.09
+    elif "Phi" in type:
+        max = 400.0 #359.99
+        min = 0.0 #0
+    elif "Theta" in type:
+        max = 100.0 #89.41
+        min = -100.0 #-87.77
+    elif "Dens" in type:
+        max = 100.0 #63.74
+        min = 0.0 #0.1
+    elif "Speed" in type:
+        max = 1000.0 #682.4
+        min = 200.0 #291.9
+    elif "Temp" in type:
+        max = 1500000.0 #1128079
+        min = 4000.0 #5000
+    elif "TimeStamp" in type:
+        return value
+    else:
+        print("Couldn't recognize type")
+        return False
+    return scaling(value, min, max, factor)
+
 
 def read_csv():
-    csv_file = pd.read_csv('test_csv.csv') 
+    #filename = 'test_csv.csv'
+    filename = "for_csound.csv"
+    csv_file = pd.read_csv(filename) 
     return csv_file
 
 
@@ -24,34 +69,34 @@ def get_data_from_csv(time_stamp):
     all_data = []
     for index, row in aurora_data.iterrows():
         if index == time_stamp:
-            all_data.append(row['Bt-med'])
-            all_data.append(row['Bt-min'])
-            all_data.append(row['Bt-max'])
-            all_data.append(row['Bx-med'])
-            all_data.append(row['Bx-min'])
-            all_data.append(row['Bx-max'])
-            all_data.append(row['By-med'])
-            all_data.append(row['By-min'])
-            all_data.append(row['By-max'])
-            all_data.append(row['Bz-med'])
-            all_data.append(row['Bz-min'])
-            all_data.append(row['Bz-max'])
-            all_data.append(row['Phi-mean'])
-            all_data.append(row['Phi-min'])
-            all_data.append(row['Phi-max'])
-            all_data.append(row['Theta-med'])
-            all_data.append(row['Theta-min'])
-            all_data.append(row['Theta-max'])
-            all_data.append(row['Dens-med'])
-            all_data.append(row['Dens-min'])
-            all_data.append(row['Dens-max'])
-            all_data.append(row['Speed-med'])
-            all_data.append(row['Speed-min'])
-            all_data.append(row['Speed-max'])
-            all_data.append(row['Temp-med'])
-            all_data.append(row['Temp-min'])
-            all_data.append(row['Temp-max'])
-            all_data.append(row['TimeStamp'])
+            all_data.append(scaling_by_type(row['Bt-med'], 'Bt-med'))
+            all_data.append(scaling_by_type(row['Bt-min'], 'Bt-min'))
+            all_data.append(scaling_by_type(row['Bt-max'], 'Bt-max'))
+            all_data.append(scaling_by_type(row['Bx-med'], 'Bx-med'))
+            all_data.append(scaling_by_type(row['Bx-min'], 'Bx-min'))
+            all_data.append(scaling_by_type(row['Bx-max'], 'Bx-max'))
+            all_data.append(scaling_by_type(row['By-med'], 'By-med'))
+            all_data.append(scaling_by_type(row['By-min'], 'By-min'))
+            all_data.append(scaling_by_type(row['By-max'], 'By-max'))
+            all_data.append(scaling_by_type(row['Bz-med'], 'Bz-med'))
+            all_data.append(scaling_by_type(row['Bz-min'], 'Bz-min'))
+            all_data.append(scaling_by_type(row['Bz-max'], 'Bz-max'))
+            all_data.append(scaling_by_type(row['Phi-mean'], 'Phi-mean'))
+            all_data.append(scaling_by_type(row['Phi-min'], 'Phi-min'))
+            all_data.append(scaling_by_type(row['Phi-max'], 'Phi-max'))
+            all_data.append(scaling_by_type(row['Theta-med'], 'Theta-med'))
+            all_data.append(scaling_by_type(row['Theta-min'], 'Theta-min'))
+            all_data.append(scaling_by_type(row['Theta-max'], 'Theta-max'))
+            all_data.append(scaling_by_type(row['Dens-med'], 'Dens-med'))
+            all_data.append(scaling_by_type(row['Dens-min'], 'Dens-min'))
+            all_data.append(scaling_by_type(row['Dens-max'], 'Dens-max'))
+            all_data.append(scaling_by_type(row['Speed-med'], 'Speed-med'))
+            all_data.append(scaling_by_type(row['Speed-min'], 'Speed-min'))
+            all_data.append(scaling_by_type(row['Speed-max'], 'Speed-max'))
+            all_data.append(scaling_by_type(row['Temp-med'], 'Temp-med'))
+            all_data.append(scaling_by_type(row['Temp-min'], 'Temp-min'))
+            all_data.append(scaling_by_type(row['Temp-max'], 'Temp-max'))
+            all_data.append(scaling_by_type(row['TimeStamp'], 'TimeStamp'))
             break
 
     return all_data
