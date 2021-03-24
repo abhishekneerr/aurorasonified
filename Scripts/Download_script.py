@@ -29,13 +29,12 @@ def press_by_id(driver, id):
         try:
             button = driver.find_element_by_id(id)
             button.click()
-            print(f"Clicked {id}")
-            return True
+            return 0
         except:
             count += 1
             print(f"Could not find and click {id}. Try: {count}.")
             time.sleep(sleep_time)
-    return False
+    return 1
 
 def create_driver(path_download, headless = True):
     """Create an instance of Firefox with appropriate options"""
@@ -43,48 +42,33 @@ def create_driver(path_download, headless = True):
     options.headless = headless
     profile = webdriver.FirefoxProfile()
     profile.set_preference("browser.download.folderList", 2) # Don't use standard download folder
-    profile.set_preference("browser.download.dir", download_destination) # Path to download destination
+    profile.set_preference("browser.download.dir", path_download) # Path to download destination
     profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "text/plain") # Don't prompt for download
     
-    exec_path = os.path.abspath(r"./Scripts/geckodriver.exe")
-    driver = webdriver.Firefox(
-        firefox_profile=profile,
-        options=options, 
-        executable_path=exec_path
-        )
+    driver = webdriver.Firefox(firefox_profile=profile, options=options)
     return driver
     
 
 def get_download_destination():
     """Just get relative path for download folder"""
-    print(os.path.abspath(r"./Downloaded_data"))
     return os.path.abspath(r"./Downloaded_data")
     
 def main():
-    print("Starting download script")
     
     path_download = get_download_destination()
-    driver = create_driver(path_download, False)
+    driver = create_driver(path_download)
 
     id_timespan_button = "timespan-button"
-    id_2hours_timespan = "ui-id-6"
-    id_7days_timespan = "ui-id-10"
+    id_3days_timespan = "ui-id-9"
     id_save_button = "save_button"
 
     open_noaa(driver)
-    if not press_by_id(driver, id_timespan_button):
-        print("Exiting python")
-        return 1
-    #if not press_by_id(driver, id_2hours_timespan):
-    if not press_by_id(driver, id_7days_timespan):
-        print("Exiting python")
-        return 1
-    if not press_by_id(driver, id_save_button):
-        print("Exiting python")
-        return 1
+    press_by_id(driver, id_timespan_button)
+    press_by_id(driver, id_3days_timespan)
+    press_by_id(driver, id_save_button)
 
     # Make sure the file has time to download:
-    time.sleep(180)
+    time.sleep(100)
     driver.quit()
     print("Done")
 
