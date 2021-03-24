@@ -16,7 +16,7 @@ def main():
         #print(index,row)
         if row['TimeStamp'] == time_stamp:
             all_data.append(row['Bt-med'])
-            all_data.append(row['Bz-min'])
+            all_data.append(row['Bt-min'])
             all_data.append(row['Bt-max'])
             all_data.append(row['Bx-med'])
             all_data.append(row['Bx-min'])
@@ -43,7 +43,7 @@ def main():
             all_data.append(row['Temp-min'])
             all_data.append(row['Temp-max'])
             all_data.append(row['TimeStamp'])
-            
+            #total 28 index and one source which is not included
             break
 
     # return all_data
