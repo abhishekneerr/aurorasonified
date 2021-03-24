@@ -7,14 +7,22 @@ hslider bounds(0, 124, 800, 50), range(0, 287, 0, 1, 1), increment(1), channel("
 </Cabbage>
 <CsoundSynthesizer>
 <CsOptions>
--n -d -+rtmidi=NULL -M0 -m0d
+;-n -d -+rtmidi=NULL -M0 -m0d --midi-key-cps=4 --midi-velocity-amp=5
+-odac0
+-M 0
+;-n
+;-d
+;-+rtmidi=NULL
+;-m0d
+;--midi-key-cps=4
+;--midi-velocity-amp=5
 </CsOptions>
 <CsInstruments>
 ; Initialize the global variables.
 
 
 sr = 44100
-ksmps = 64
+ksmps = 10
 nchnls = 2
 0dbfs = 1
 
