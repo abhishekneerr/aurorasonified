@@ -1,12 +1,20 @@
-<Cabbage>
+<Cabbage> bounds(0, 0, 0, 0)
 form caption("Valkyrie"), size(870, 732), colour(58, 110, 182), pluginid("aur1")
 image bounds(0, 0, 870, 432), file("Resources/background.png")
 hslider bounds(236, 212, 398, 50), range(0, 6, 6, 1, 1), channel("indexday"), increment(1), popuptext("Select Day")
 rslider bounds(394, 306, 90, 61), range(0, 287, 0, 1, 1), increment(1), channel("indextime"), popuptext("Select Time of Day")
 ;csoundoutput bounds(0, 432, 870, 300)
+;csoundoutput bounds(0, 432, 870, 50)
 
 label bounds(392, 214, 80, 16), text(DAY), fontcolour(255, 255, 255, 255)
-label bounds(248, 278, 80, 16), identchannel("timedisplay")
+label bounds(226, 402, 427, 26) identchannel("timedisplay"), fontcolour(255, 255, 255, 255)
+
+label bounds(15, 15, 200, 25), align("left"), identchannel("displayBt"), fontcolour(255, 255, 255, 255)
+label bounds(15, 50, 200, 25), align("left"), identchannel("displayBx"), fontcolour(255, 255, 255, 255)
+label bounds(15, 85, 200, 25), align("left"), identchannel("displayBy"), fontcolour(255, 255, 255, 255)
+label bounds(15, 120, 200, 25), align("left"), identchannel("displayBz"), fontcolour(255, 255, 255, 255)
+label bounds(15, 155, 200, 25), align("left"), identchannel("displayDens"), fontcolour(255, 255, 255, 255)
+label bounds(15, 190, 200, 25), align("left"), identchannel("displaySpeed"), fontcolour(255, 255, 255, 255)
 </Cabbage>
 <CsoundSynthesizer>
 <CsOptions>
@@ -192,21 +200,36 @@ massign 0, 10
                 chnset  kTemp_min,  "Temp_min"
                 kcheck  OSClisten gilisten, "/Temp_max", "f", kTemp_max
                 chnset  kTemp_max,  "Temp_max"
-
+                printk2 kTemp_max
                 kcheck  OSClisten gilisten, "/TimeStamp", "s", STimeStamp
 
-                STimeDisplay sprintf " text(\"%s\") ", "yolo"
-                printf "'%s'", kcheck, STimeDisplay
+                STimeDisplay sprintfk " text(\"%s\") ", STimeStamp
                 chnset  STimeDisplay,  "timedisplay"
-                endif
+                
+                
+                STimeDisplay sprintfk " text(\"Bt: %i%s\") ", int(kBt_med*100), "%"
+                chnset  STimeDisplay,  "displayBt"
+                
+                STimeDisplay sprintfk " text(\"Bx: %i%s\") ", int(kBx_med*100), "%"
+                chnset  STimeDisplay,  "displayBx"
+                
+                STimeDisplay sprintfk " text(\"By: %i%s\") ", int(kBy_med*100), "%"
+                chnset  STimeDisplay,  "displayBy"
+                
+                STimeDisplay sprintfk " text(\"Bz: %i%s\") ", int(kBz_med*100), "%"
+                chnset  STimeDisplay,  "displayBz"
+                
+                STimeDisplay sprintfk " text(\"Density: %i%s\") ", int(kDens_med*100), "%"
+                chnset  STimeDisplay,  "displayDens"
+                
+                STimeDisplay sprintfk " text(\"Speed: %i%s\") ", int(kSpeed_med*100), "%"
+                chnset  STimeDisplay,  "displaySpeed"
+endin
 
-                endin
 
-                instr 10
-                    kVal = 0
-                endin
+
 ;**********************************************************************
-/*
+
 ; partikkel instr
 instr 10
 
@@ -607,12 +630,12 @@ instr 100  ;; mix and reverb
 endin
 ;**********************************************************************
 
-*/
+
 </CsInstruments>
 <CsScore>
 f0 z
 i1 0 [60*60*24*7]
 
-;i100 0 36000000
+i100 0 36000000
 </CsScore>
 </CsoundSynthesizer>
