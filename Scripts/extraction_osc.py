@@ -38,7 +38,7 @@ def scaling_by_type(value, type):
         max = 25.0 #20.55
         min = -25.0 #-19.09
     elif "Phi" in type:
-        max = 400.0 #359.99
+        max = 360.0 #359.99
         min = 0.0 #0
     elif "Theta" in type:
         max = 100.0 #89.41
