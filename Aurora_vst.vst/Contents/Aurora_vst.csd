@@ -1,9 +1,10 @@
 <Cabbage>
-form caption("Aurora synth"), size(800, 600), colour(58, 110, 182), pluginid("aur1")
+form caption("Aurora synth"), size(540, 588), colour(58, 110, 182), pluginid("aur1")
+image bounds(0, 0, 540, 288), file("Resources/background.png")
+csoundoutput bounds(0, 288, 540, 300)
 ;keyboard bounds(0, 205, 800, 95)
-hslider bounds(0, 50, 800, 50), range(0, 6, 0, 1, 1), channel("indexday"), increment(1), popuptext("Days back")    ;; Add max value as variable
-hslider bounds(0, 124, 800, 50), range(0, 287, 0, 1, 1), increment(1), channel("indextime"), popuptext("Time of day")
-csoundoutput bounds(0, 300, 800, 300)
+;hslider bounds(0, 50, 800, 50), range(0, 6, 0, 1, 1), channel("indexday"), increment(1), popuptext("Days back")    ;; Add max value as variable
+;hslider bounds(0, 124, 800, 50), range(0, 287, 0, 1, 1), increment(1), channel("indextime"), popuptext("Time of day")
 </Cabbage>
 <CsoundSynthesizer>
 <CsOptions>
@@ -69,7 +70,6 @@ gilisten OSCinit 9000
 ; Global Variables:
  gaPartikkel1 init 0
  gaPartikkel2 init 0
- gkRateControl init 0
 ;***********************************
 
 
@@ -123,11 +123,13 @@ massign 0, 10
             kTemp_min init 0
             kTemp_max init 0
 
-            ;STimeStamp = ""
+            STimeStamp = ""
             ;nxtmsg:
+            iPortTime = 0.1
 
                 kcheck  OSClisten gilisten, "/Bt_med", "f", kBt_med
-                chnset  kBt_med,  "Bt_med"
+                kBt_med_port port kBt_med, iPortTime
+                chnset  kBt_med_port,  "Bt_med"
                 kcheck  OSClisten gilisten, "/Bt_min", "f", kBt_min
                 chnset  kBt_min,  "Bt_min"
                 kcheck  OSClisten gilisten, "/Bt_max", "f", kBt_max
@@ -169,14 +171,16 @@ massign 0, 10
                 chnset  kTheta_max,  "Theta_max"
 
                 kcheck  OSClisten gilisten, "/Dens_med", "f", kDens_med
-                chnset  kDens_med,  "Dens_med"
+                kDens_med_port port kDens_med, iPortTime
+                chnset  kDens_med_port,  "Dens_med"
                 kcheck  OSClisten gilisten, "/Dens_min", "f", kDens_min
                 chnset  kDens_min,  "Dens_min"
                 kcheck  OSClisten gilisten, "/Dens_max", "f", kDens_max
                 chnset  kDens_max,  "Dens_max"
 
                 kcheck  OSClisten gilisten, "/Speed_med", "f", kSpeed_med
-                chnset  kSpeed_med,  "Speed_med"
+                kSpeed_med_port port kSpeed_med, iPortTime
+                chnset  kSpeed_med_port,  "Speed_med"
                 kcheck  OSClisten gilisten, "/Speed_min", "f", kSpeed_min
                 chnset  kSpeed_min,  "Speed_min"
                 kcheck  OSClisten gilisten, "/Speed_max", "f", kSpeed_max
@@ -189,13 +193,10 @@ massign 0, 10
                 kcheck  OSClisten gilisten, "/Temp_max", "f", kTemp_max
                 chnset  kTemp_max,  "Temp_max"
 
-                ;kcheck  OSClisten gilisten, "/TimeStamp", "s", STimeStamp
+                kcheck  OSClisten gilisten, "/TimeStamp", "s", STimeStamp
+                printf "Time: '%s'\n", kcheck, STimeStamp
                 ;chnset  STimeStamp,  "TimeStamp"
 
-            ;printk2 kTemp_max
-            ;if (kcheck == 0) goto ex
-            ;    kgoto nxtmsg
-            ;ex:
                 endin
 ;**********************************************************************
 
@@ -392,26 +393,6 @@ instr 10
  ;####################
 
 
- k11 ctrl7 1, 11, 0, 1  ; Used for RelDur
- k11 init 0.5
-
- ;k12 ctrl7 1, 12, 0, 1 ; Used for grainrate
- ;k12 init 0.5
-
- k13 ctrl7   1, 13, 0, 1  ; Controls Distortion
- k13 init 0.5
-
- k14 ctrl7 1, 14, 0, 1 ; Controls AM
- k14 init 0.5
-
- k15 ctrl7 1, 15, 0, 1 ; Controls Reverb & ADSR
- k15 init 0.5
-
- k19 ctrl7 1, 19, 0, 1
- k20 ctrl7 1, 20, 0, 1
- k21 ctrl7 1, 21, 0, 1
- k22 ctrl7 1, 22, 0, 1
-
  ;; Just testing:
  k11 = 0.5; kBt_med
  k12 = 0.5 ;kBt_med
@@ -433,22 +414,19 @@ instr 10
  kwavfreq = iCpsMidi
 
  ;; Grainrate and duration
- kRelDur = (kDens_med^2)*1.9 + 0.1
+ kRelDur = (1-kDens_med)^7 *1.9 + 0.1
+ kRelDurOscSpeed = (kDens_max)*6 + 0.1
+ kRelDurOscAmp = (kDens_min)*0.5 + 0.05
+ kRelDurOsc = oscil(kRelDurOscAmp, kRelDurOscSpeed) + 1
+ kRelDur = kRelDur * kRelDurOsc
 
- ;kRateControl = ((k12^2)*1.5+0.5)
- ;kRateControl = ((k12^2)*20+0.2)
 
- ;kRateControlNorm = 2^int(k12*3.99)*0.5
- ;kRateControl init i(kRateControlNorm)
- ;printk2 kRateControl
- ;kRateControl = port(kRateControlNorm, 0.2, i(kRateControl))
- ;kgrainrate = (k11*iCpsMidi) + (kRateControl*(1-k11))
  kRateControl = gkRateControl
  kgrainrate = iCpsMidi * kRateControl
  kduration = (kRelDur*1000)/kgrainrate ; grain dur in milliseconds, relative to grain rate
 
  krandommask = (max(0, kBz_med-0.5)*1.7)^2
- ;ka_d_ration = ... <- CONTROL
+ ka_d_ration = kBz_med
  ;####################
 
 
@@ -484,32 +462,32 @@ a1,a2,a3,a4,a5,a6,a7,a8 partikkel \ ; (beginner)
 
  ;; Noise: (??) <- CONTROL
  aRandom rand 1
- kRandomMix = 0.3
- kRandomFreq = iCpsMidi
- kRandomBandLFO = (oscil(0.5, 0.2) + 0.5)
+ kRandomMix = (kSpeed_med^0.2)*0.5+0.4
+ kRandomFreq = iCpsMidi*0.5
+ kRandomBandLFO = (oscil(0.5, (kSpeed_max-kSpeed_min)*100) + 0.5)
  kRandomBandControl = kRandomBandLFO * 0.01 + 0.01
- kRandomBand = kRandomFreq*kRandomBandControl
- kAmpFactor = 0.8
+ kRandomBand = kRandomFreq*kRandomBandControl*kSpeed_min
+ kAmpFactor = kSpeed_max
  aRandom = \
     butbp(aRandom, kRandomFreq*1, kRandomBand*1) * kAmpFactor^0 + \
     butbp(aRandom, kRandomFreq*2, kRandomBand*2) * kAmpFactor^1 + \
     butbp(aRandom, kRandomFreq*3, kRandomBand*3) * kAmpFactor^2 + \
     butbp(aRandom, kRandomFreq*4, kRandomBand*4) * kAmpFactor^3 + \
-    butbp(aRandom, kRandomFreq*5, kRandomBand*5) * kAmpFactor^4
- ;a1 = ((a1*(1-kRandomMix)^0.5) + (aRandom*kRandomMix^0.5))
- ;a2 = ((a2*(1-kRandomMix)^0.5) + (aRandom*kRandomMix^0.5))
+    butbp(aRandom, kRandomFreq*5, kRandomBand*5) * kAmpFactor^4 + \
+    butbp(aRandom, kRandomFreq*6, kRandomBand*6) * kAmpFactor^5 + \
+    butbp(aRandom, kRandomFreq*7, kRandomBand*7) * kAmpFactor^6 + \
+    butbp(aRandom, kRandomFreq*8, kRandomBand*8) * kAmpFactor^7
+
+ aRandom *= 10
+ a1 = ((a1*(1-kRandomMix)^0.5) + (aRandom*kRandomMix^0.5))
+ a2 = ((a2*(1-kRandomMix)^0.5) + (aRandom*kRandomMix^0.5))
 
 
- printk2 kBt_med
  ;; Chorus / Flanger: <- CONTROL
  kChorusMix = (kBt_max)^0.7*0.5 ;0.5 ; MAX:0.5, MIN:0.0
  kChorusOffset = (kBt_med^3*20)+0.01;20
  kChorusRate = kBt_med^2*5+0.1;0.4
  kChorusDepth = (kBt_min^3*kChorusOffset)+0.01;10
- ;printk2 kChorusMix
- ;printk2 kChorusDepth
- ;printk2 kChorusRate
- ;printk2 kChorusOffset
  iChorusTable = giSine
   aDelayTime1 oscili 0.5, kChorusRate, iChorusTable, 0 ; delay time oscillator (LFO)
   aDelayTime2 oscili 0.5, kChorusRate, iChorusTable, .5 ; delay time oscillator (LFO)
@@ -526,22 +504,23 @@ a1,a2,a3,a4,a5,a6,a7,a8 partikkel \ ; (beginner)
 ;; todo: Some volume scaling to compensate for reverb
 ;; ADSR
  adsr:
- kAttack = ((k15^3)*0.50)+0.01
+ kAdsrControl = tanh(((kBt_med + kDens_med) * 0.5)^3 * 100)
+ kAttack = ((kAdsrControl^3)*0.50)+0.1
  iAttack = i(kAttack)
- iDecay = iAttack*0.3
- kSustain = (k15)*0.8+0.2
+ iDecay = iAttack*0.4
+ kSustain = (kAdsrControl)*0.3+0.7
  iSustain = i(kSustain)
- iRelease = iAttack*8
+ iRelease = iAttack*4
  if (iAttack == 0) then
     reinit adsr
  endif
  aAdsr expsegr 0.02, iAttack, 1, iDecay, iSustain, iRelease, 0.01
- a1 *= aAdsr * 0.8
- a2 *= aAdsr * 0.8
+ a1 *= aAdsr
+ a2 *= aAdsr
 
 
  ;; Distortion:
- kDistortion = (k13^2)*10 + 1
+ ;kDistortion = 4 ;(k13^2)*10 + 1
  ;a1 = tanh(a1 * kDistortion) * (1/kDistortion)
  ;a2 = tanh(a2 * kDistortion) * (1/kDistortion)
 
@@ -560,21 +539,25 @@ a1,a2,a3,a4,a5,a6,a7,a8 partikkel \ ; (beginner)
 endin
 ;**********************************************************************
 
-instr 100  ;; Reverb
+instr 100  ;; mix and reverb
+
+ kBz_med chnget "Bz_med"
+ kBz_min chnget "Bz_min"
+ kBz_max chnget "Bz_max"
 
  a1 = gaPartikkel1
  a2 = gaPartikkel2
  gaPartikkel1 = 0
  gaPartikkel2 = 0
- ;printk2(rms(a1))
 
  ;; Phaser: <- CONTROL
- kPhaserMix = 1
+ kPhaserMix = tanh(1-kBz_max^2)
  kPhaserLowFreq = 100
  kPhaserRange = 5000
- kPhaserLFO oscil 0.5, 0.2, giSine ;; TEST med: giSigmoRise eller giSigmoFall
+ kPhaserLFOFreq = (kBz_med-0.5)*3*-1
+ kPhaserLFO oscil 0.5, kPhaserLFOFreq, giSigmoRise
  kPhaserFr = ((kPhaserLFO+0.5)*kPhaserRange)+kPhaserLowFreq
- kPhaserSharpness = 0.9
+ kPhaserSharpness = (kBz_min^0.4)*0.4 + 0.5
  kPhaserScale = kPhaserSharpness*kPhaserSharpness*0.3 ; empirical scaling factor (Oeyvind)
  aPhaserL Phaser a1,kPhaserFr,kPhaserSharpness ; Allpass phaser UDO
  aPhaserR Phaser a2,kPhaserFr,kPhaserSharpness ; Allpass phaser UDO
@@ -592,8 +575,8 @@ instr 100  ;; Reverb
  aPhaserR Phaser aPhaserR,kPhaserFr*8,kPhaserSharpness ; Allpass phaser UDO
  aPhaserL *= kPhaserScale
  aPhaserR *= kPhaserScale
- ;a1 = ((a1*(1-kPhaserMix)^0.5) + (aPhaserL*kPhaserMix^0.5))
- ;a2 = ((a2*(1-kPhaserMix)^0.5) + (aPhaserR*kPhaserMix^0.5))
+ a1 = ((a1*(1-kPhaserMix)^0.5) + (aPhaserL*kPhaserMix^0.5))
+ a2 = ((a2*(1-kPhaserMix)^0.5) + (aPhaserR*kPhaserMix^0.5))
 
 
 
@@ -603,9 +586,6 @@ instr 100  ;; Reverb
  kReverb_cutoff chnget "Reverb_cutoff"
  chnset k0, "Reverb_cutoff"
  kReverb_mix chnget "kReverb_mix"
- printk2 kReverb_level
- printk2 kReverb_cutoff
- printk2 kReverb_mix
 
  iReverbAmp = 0.7
  aReverbL, aReverbR reverbsc a1, a2, kReverb_level, kReverb_cutoff
@@ -615,23 +595,7 @@ instr 100  ;; Reverb
  aOutL = a1
  aOutR = a2
 
- ;; Volume: (Just while working)
- k18 init 0.5
- k18 ctrl7 1, 18, 0, 10
- k18 = 1
- aOutL *= k18
- aOutR *= k18
-
  outs aOutL, aOutR
-
- ;; Temp placement:
- k12 ctrl7 1, 12, 0, 1 ; Used for grainrate
- k12 init 0.5
- k12 = 0.7
-
- kRateControlNorm = 2^int(k12*3.99)*0.25
- kRateControl = port(kRateControlNorm, 0.01)
- gkRateControl = kRateControl
 
 endin
 ;**********************************************************************
