@@ -1,10 +1,12 @@
 <Cabbage>
-form caption("Aurora synth"), size(540, 588), colour(58, 110, 182), pluginid("aur1")
-image bounds(0, 0, 540, 288), file("Resources/background.png")
-csoundoutput bounds(0, 288, 540, 300)
-;keyboard bounds(0, 205, 800, 95)
-;hslider bounds(0, 50, 800, 50), range(0, 6, 0, 1, 1), channel("indexday"), increment(1), popuptext("Days back")    ;; Add max value as variable
-;hslider bounds(0, 124, 800, 50), range(0, 287, 0, 1, 1), increment(1), channel("indextime"), popuptext("Time of day")
+form caption("Valkyrie"), size(870, 732), colour(58, 110, 182), pluginid("aur1")
+image bounds(0, 0, 870, 432), file("Resources/background.png")
+hslider bounds(236, 212, 398, 50), range(0, 6, 6, 1, 1), channel("indexday"), increment(1), popuptext("Select Day")
+rslider bounds(394, 306, 90, 61), range(0, 287, 0, 1, 1), increment(1), channel("indextime"), popuptext("Select Time of Day")
+;csoundoutput bounds(0, 432, 870, 300)
+
+label bounds(392, 214, 80, 16), text(DAY), fontcolour(255, 255, 255, 255)
+label bounds(248, 278, 80, 16), identchannel("timedisplay")
 </Cabbage>
 <CsoundSynthesizer>
 <CsOptions>
@@ -12,7 +14,6 @@ csoundoutput bounds(0, 288, 540, 300)
 </CsOptions>
 <CsInstruments>
 ; Initialize the global variables.
-
 
 sr = 44100
 ksmps = 64
@@ -46,8 +47,6 @@ gilisten OSCinit 9000
 	adel2 init 0
 
 	kR = 1/kR
-	/* ksmps = 1 */
-	/* 2nd order allpass */
 	kthecos = cos((2*$M_PI*kfr)/sr);
 	aa1 = -2*kR*kthecos;
 	aa2 = kR*kR;
@@ -60,7 +59,7 @@ gilisten OSCinit 9000
 	adel2 = adel1
 	adel1 = aw
 
-	aout = ax + ay 	/* combines original signal + allpass output so the destructive difference causes bump in spectrum */
+	aout = ax + ay 	; combines original signal + allpass output so the destructive difference causes bump in spectrum
 	xout aout
 
 	endop
@@ -83,6 +82,7 @@ massign 0, 10
 
         kTime chnget "indextime"
         kDay chnget "indexday"
+        kDay = 6-kDay
         kFinalIndex = kTime + kDay*288
             OSCsend kFinalIndex, "127.0.0.1", 8000, "/index_from_csound", "i", kFinalIndex
 ;
@@ -123,7 +123,7 @@ massign 0, 10
             kTemp_min init 0
             kTemp_max init 0
 
-            STimeStamp = ""
+            STimeStamp init ""
             ;nxtmsg:
             iPortTime = 0.1
 
@@ -194,12 +194,19 @@ massign 0, 10
                 chnset  kTemp_max,  "Temp_max"
 
                 kcheck  OSClisten gilisten, "/TimeStamp", "s", STimeStamp
-                printf "Time: '%s'\n", kcheck, STimeStamp
-                ;chnset  STimeStamp,  "TimeStamp"
+
+                STimeDisplay sprintf " text(\"%s\") ", "yolo"
+                printf "'%s'", kcheck, STimeDisplay
+                chnset  STimeDisplay,  "timedisplay"
+                endif
 
                 endin
-;**********************************************************************
 
+                instr 10
+                    kVal = 0
+                endin
+;**********************************************************************
+/*
 ; partikkel instr
 instr 10
 
@@ -600,11 +607,12 @@ instr 100  ;; mix and reverb
 endin
 ;**********************************************************************
 
+*/
 </CsInstruments>
 <CsScore>
 f0 z
 i1 0 [60*60*24*7]
 
-i100 0 36000000
+;i100 0 36000000
 </CsScore>
 </CsoundSynthesizer>
