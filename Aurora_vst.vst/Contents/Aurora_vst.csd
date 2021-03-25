@@ -1,24 +1,26 @@
 <Cabbage> bounds(0, 0, 0, 0)
-form caption("Valkyrie"), size(870, 732), colour(58, 110, 182), pluginid("aur1")
-image bounds(0, 0, 870, 432), file("Resources/background.png")
-hslider bounds(236, 212, 398, 50), range(0, 6, 6, 1, 1), channel("indexday"), increment(1), popuptext("Select Day")
-rslider bounds(394, 306, 90, 61), range(0, 287, 0, 1, 1), increment(1), channel("indextime"), popuptext("Select Time of Day")
+form caption("Valkyrie"), size(870, 432), colour(58, 110, 182), pluginid("aur1")
+image bounds(0, 0, 870, 432), file("background.png")
+hslider bounds(236, 212, 398, 50), range(0, 6, 6, 1, 1), channel("indexday"), , popuptext("Day") trackercolour(11, 96, 38, 255)
+rslider bounds(394, 306, 90, 61), range(0, 287, 0, 1, 1), , channel("indextime"), popuptext("Time")
 ;csoundoutput bounds(0, 432, 870, 300)
 ;csoundoutput bounds(0, 432, 870, 50)
 
-label bounds(392, 214, 80, 16), text(DAY), fontcolour(255, 255, 255, 255)
-label bounds(226, 402, 427, 26) identchannel("timedisplay"), fontcolour(255, 255, 255, 255)
+label bounds(414, 214, 36, 14), text("DAY"), fontcolour(255, 255, 255, 255) alpha(0.85)
+label bounds(178, 410, 520, 16) identchannel("timedisplay"), fontcolour(255, 255, 255, 255) alpha(0.7)
 
-label bounds(15, 15, 200, 25), align("left"), identchannel("displayBt"), fontcolour(255, 255, 255, 255)
-label bounds(15, 50, 200, 25), align("left"), identchannel("displayBx"), fontcolour(255, 255, 255, 255)
-label bounds(15, 85, 200, 25), align("left"), identchannel("displayBy"), fontcolour(255, 255, 255, 255)
-label bounds(15, 120, 200, 25), align("left"), identchannel("displayBz"), fontcolour(255, 255, 255, 255)
-label bounds(15, 155, 200, 25), align("left"), identchannel("displayDens"), fontcolour(255, 255, 255, 255)
-label bounds(15, 190, 200, 25), align("left"), identchannel("displaySpeed"), fontcolour(255, 255, 255, 255)
+label bounds(586, 338, 100, 15), align("left"), identchannel("displayBt"), fontcolour(255, 255, 255, 255) alpha(0.75)
+label bounds(520, 318, 100, 15), align("left"), identchannel("displayBx"), fontcolour(255, 255, 255, 255) alpha(0.75)
+label bounds(586, 318, 100, 15), align("left"), identchannel("displayBy"), fontcolour(255, 255, 255, 255) alpha(0.75)
+label bounds(654, 318, 100, 14), align("left"), identchannel("displayBz"), fontcolour(255, 255, 255, 255) alpha(0.75)
+label bounds(616, 358, 100, 15), align("left"), identchannel("displayDens"), fontcolour(255, 255, 255, 255) alpha(0.75) 
+label bounds(527, 358, 100, 15), align("left"), identchannel("displaySpeed"), fontcolour(255, 255, 255, 255) alpha(0.75)
+
+
 </Cabbage>
 <CsoundSynthesizer>
 <CsOptions>
--n -d -Ma -m0d ;-+rtmidi=NULL
+-n -d -+rtmidi=NULL -M0 -m0d 
 </CsOptions>
 <CsInstruments>
 ; Initialize the global variables.

@@ -13,7 +13,7 @@ ip = "127.0.0.1"
 sendport = 9000
 inport = 8000 
 
-filename = "../Data_csound/for_csound.csv"
+filename = "./Data_csound/for_csound.csv"
 aurora_data = pd.read_csv(filename) 
 
 def scaling(value, minimum, maximum, factor=1):
