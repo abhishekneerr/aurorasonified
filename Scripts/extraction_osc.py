@@ -1,6 +1,6 @@
 from pythonosc import dispatcher            #  to catch and map input from osc
 from pythonosc import osc_server            #  to create and send OSC messages
-from pythonosc import osc_message_builder   #  to package osc messages 
+from pythonosc import osc_message_builder   #  to package osc messages
 from pythonosc import udp_client            #  to listen for messages
 from pythonosc.osc_server import AsyncIOOSCUDPServer
 import argparse                             #  to understand messages that come in
@@ -11,10 +11,10 @@ import csv
 
 ip = "127.0.0.1"
 sendport = 9000
-inport = 8000 
+inport = 8000
 
 filename = "../Data_csound/for_csound.csv"
-aurora_data = pd.read_csv(filename) 
+aurora_data = pd.read_csv(filename)
 
 def scaling(value, minimum, maximum, factor=1):
     """Scale the value according to the recorded minimum and maximum values, to something between 0-1"""
@@ -63,10 +63,10 @@ def scaling_by_type(value, type):
 
 
 def get_data_from_csv(index_from_csound):
-    
+
     selected_row = aurora_data.iloc[index_from_csound]
     all_data = []
-    for index in selected_row: 
+    for index in selected_row:
         all_data.append(index)
     return all_data
 
@@ -79,7 +79,7 @@ def get_osc_messages(data_path, data_sent):
 
 def send_osc_messages(sendport, all_data):
     # TEMP:
-    
+
     client.send_message("/Bt_med", scaling_by_type(float(all_data[0]), "Bt_med"))
     client.send_message("/Bt_min", scaling_by_type(float(all_data[1]), "Bt_min"))
     client.send_message("/Bt_max", scaling_by_type(float(all_data[2]), "Bt_max"))
@@ -108,7 +108,7 @@ def send_osc_messages(sendport, all_data):
     client.send_message("/Temp_min", scaling_by_type(float(all_data[25]), "Temp_min"))
     client.send_message("/Temp_max", scaling_by_type(float(all_data[26]), "Temp_max"))
     client.send_message("/TimeStamp", scaling_by_type(str(all_data[27]), "TimeStamp"))
-    
+
     print("message sent on port:", sendport)
 
 
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     ##sending osc messages on
     global client
     client = udp_client.SimpleUDPClient(ip,sendport)
-    
+
     ##catching osc messages/receiving osc messages
     dispatcher = dispatcher.Dispatcher()
     dispatcher.map("/index_from_csound", get_osc_messages) #creating the variables we want to receive osc messages for
@@ -125,17 +125,17 @@ if __name__ == '__main__':
     #set up server to listen for osc messages
     server = osc_server.ThreadingOSCUDPServer((ip,inport),dispatcher)
     server.serve_forever()
-    
+
     # time_stamp = 1
     # get_data_from_csv(time_stamp)
 
 
 
-    
-    
-    
-    
 
-   
 
- 
+
+
+
+
+
+
