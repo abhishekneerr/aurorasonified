@@ -1,13 +1,6 @@
 # aurorasonified
-
-## Getting started
-0. Clone repository:`git clone https://github.com/abhishekneerr/backend-aurorasonified.git`
-1. Make sure you have Python3.9 installed
-2. Create a Virtual Environment:
-    `python3.9 -m venv .venv`
-3. Enter the Virtual Environment:
-    Windows(command prompt): `.\.venv\Scripts\activate.bat`
-    Linux: `source ./.venv/bin/activate`
-3. Install the required python packages using following comand
-    `python -m pip install -r requirements.txt`
-4. upcoming changes
+0. Install python 3, Csound and clone the repository
+1. Satisfy the requirements mentioned in the file "requirements.txt"
+2. Copy the plugin folder for your OS in your directory.
+3. Run the file "extraction_osc.py" at the same time when you are running the plugin.
+4. Enjoy the sounds of Aurora.
