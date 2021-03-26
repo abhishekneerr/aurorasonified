@@ -1,5 +1,5 @@
 <Cabbage> bounds(0, 0, 0, 0)
-form caption("Valkyrie"), size(870, 432), colour(58, 110, 182), pluginid("aur1")
+form caption("Valkyrie"), size(870, 432), colour(58, 110, 182), pluginid("valk")
 image bounds(0, 0, 870, 432), file("Resources/background.png")
 hslider bounds(236, 212, 398, 50), range(0, 6, 0, 1, 1), channel("indexday"), , popuptext("Day") trackercolour(11, 96, 38, 255)
 rslider bounds(394, 306, 90, 61), range(0, 287, 0, 1, 1), , channel("indextime"), popuptext("Time")
@@ -87,7 +87,6 @@ massign 0, 10
 ;******************************************************************************************************
 ;******************************************************************************************************
     instr  1
-
 ;--------  send osc message to python ----------;
 
 
